@@ -35,6 +35,9 @@ class Client:
             username: Your CAASPP username.
             password: Your CAASPP password.
             login_code_func: A method that will provide the login code once CAASPP emails it to you.
+
+        Raises:
+            ValueError: Invalid credentials.
         """
         self.credentials = dict(username=username, password=password)
         self._login_code_func = login_code_func
@@ -50,7 +53,6 @@ class Client:
 
     def _event_hooks(self, r, *args, **kwargs):
         scheme, netloc, path, query, frag = urlsplit(r.url)
-        print(r.url, path, r.status_code)
         if path == "/auth/realms/california/protocol/saml" and r.status_code == 200:
             self.session.cookies.update(r.cookies.get_dict())
             root = etree.fromstring(r.text, parser=etree.HTMLParser(encoding='utf8'))
@@ -72,7 +74,6 @@ class Client:
                     raise ValueError("Invalid credentials.")
             else:
                 SAML_response = root.xpath('//*[@name="SAMLResponse"]')[0].get('value')
-                print(SAML_response)
                 self.session.post("https://mytoms.ets.org/mt/fedletapplication", data=dict(SAMLResponse=SAML_response))
         elif path == "/mt/fedletapplication":
             print("Successfully authenticated")
