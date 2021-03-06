@@ -3,7 +3,6 @@
 This module is an attempt to automate many parts of the CAASPP suite of sites in order to gather and submit data efficiently.
 
 TODO:
-    Document the created authentication methods.
     Create method to select role.
     Define what you want to automate.
 
@@ -13,6 +12,8 @@ import requests
 from collections import deque
 from urllib.parse import urlsplit
 from lxml import etree
+import json
+import re
 
 
 class Client:
@@ -52,7 +53,12 @@ class Client:
         return self.visit_history[-1].status_code == 200
 
     def _event_hooks(self, r, *args, **kwargs):
+        """Primary purpose is to navigate the authentication process but also tracks visit history and sets self.roles.
+
+        Sets self.roles with the available roles.
+        """
         scheme, netloc, path, query, frag = urlsplit(r.url)
+        print(r.url, r.status_code)
         if path == "/auth/realms/california/protocol/saml" and r.status_code == 200:
             self.session.cookies.update(r.cookies.get_dict())
             root = etree.fromstring(r.text, parser=etree.HTMLParser(encoding='utf8'))
@@ -77,6 +83,15 @@ class Client:
                 self.session.post("https://mytoms.ets.org/mt/fedletapplication", data=dict(SAMLResponse=SAML_response))
         elif path == "/mt/fedletapplication":
             print("Successfully authenticated")
+        elif path == "/TOMS" and r.status_code == 200:
+            root = etree.fromstring(r.text, parser=etree.HTMLParser(encoding='utf8'))
+            scripts = root.xpath('//*/script')
+            for script in scripts:
+                try:
+                    self.roles = json.loads(re.findall(r"(?<=var caasppInfoString = ')[\w\W]+}}(?=';)", script.text)[0])
+                    break
+                except (TypeError, IndexError):
+                    pass
         else:
             self.visit_history.append(r)
             return r
