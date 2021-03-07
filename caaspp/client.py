@@ -85,19 +85,21 @@ class Client:
         elif path == "/mt/fedletapplication":
             print("Successfully authenticated")
         elif path == "/TOMS" and r.status_code == 200:
-            root = etree.fromstring(r.text, parser=etree.HTMLParser(encoding='utf8'))
-            scripts = root.xpath('//*/script')
-            regex_pattern = r"(?<=var caasppInfoString = ['|\"])[\w\W]+}}(?=['|\"];)"
-            for script in scripts:
-                try:
-                    json_data = re.findall(regex_pattern, script.text)
-                    if json_data:
-                        data = json_data[0].replace("\\t", "").replace("\\", '').replace("'", '"')
-                        self.roles = json.loads(data)
-                        break
-                except (IndexError, TypeError):
-                    pass
+            if not "selectedProgram=CAASPP" in query:
+                root = etree.fromstring(r.text, parser=etree.HTMLParser(encoding='utf8'))
+                scripts = root.xpath('//*/script')
+                regex_pattern = r"(?<=var caasppInfoString = ['|\"])[\w\W]+}}(?=['|\"];)"
+                for script in scripts:
+                    try:
+                        json_data = re.findall(regex_pattern, script.text)
+                        if json_data:
+                            data = json_data[0].replace("\\t", "").replace("\\", '').replace("'", '"')
+                            json_data = json.loads(data)['info']
+                            self.user_id = json_data['userInfo']
+                            self.roles = json_data['roleOrgs']
+                            break
+                    except (IndexError, TypeError):
+                        pass
         else:
             self.visit_history.append(r)
             return r
-
