@@ -21,6 +21,7 @@ class Client:
     _HEADERS = {
         'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
                       "Chrome/70.0.3538.77 Safari/537.36"}
+    _HOST = ""
 
     def __init__(self):
         self.session = requests.session()
@@ -28,7 +29,7 @@ class Client:
         self.visit_history = deque(maxlen=10)
         self.session.hooks['response'].append(self._event_hooks)
 
-    def login(self, username: str, password: str, login_code_func):
+    def _login(self, link: str, username: str, password: str, login_code_func):
         """Logs into CAASPP.
 
         Logs into any CAASPP system since they all use the same authentication.
@@ -44,14 +45,9 @@ class Client:
         self.credentials = dict(username=username, password=password)
         self._login_code_func = login_code_func
         try:
-            self.connection_status = self._login()
+            self.session.get(link)
         except RecursionError:
             return "Recursion Error"
-
-
-    def _login(self):
-        self.session.get("https://mytoms.ets.org/mt/login.htm")
-        return self.visit_history[-1].status_code == 200
 
     def _event_hooks(self, r, *args, **kwargs):
         """Primary purpose is to navigate the authentication process but also tracks visit history and sets self.roles.

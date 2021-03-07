@@ -1,9 +1,25 @@
+"""An unofficial API for the CAASPP TOMS website.
+
+This under construction module is meant to allow us to upload users, test settings, test assignments to TOMS as well as download data from TOMS.
+
+    Basic setup:
+
+    client = TOMS()
+    client.login(username='username', password='password', login_code_func=login_code_func)
+    client.set_role(organization_id=12345, role_id=4)
+    ...
+"""
+
 from caaspp.client import Client
 
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
 
+class TOMS(Client):
+    _HOST = "https://mytoms.ets.org/"
 
-class toms(Client):
+    def login(self, username: str, password: str, login_code_func):
+        self._login(link=urljoin(self._HOST, r"mt/login.htm"), username=username, password=password, login_code_func=login_code_func)
+
     def set_role(self, organization_id: int, role_id: int):
         """Set's the user's role in the TOMS system.
 
