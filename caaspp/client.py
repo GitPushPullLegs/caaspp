@@ -3,6 +3,7 @@
 This module is an attempt to automate many parts of the CAASPP suite of sites in order to gather and submit data efficiently.
 
 TODO:
+    Make this login method useful for more than TOMS.
     Create method to select role.
     Define what you want to automate.
 
@@ -86,11 +87,15 @@ class Client:
         elif path == "/TOMS" and r.status_code == 200:
             root = etree.fromstring(r.text, parser=etree.HTMLParser(encoding='utf8'))
             scripts = root.xpath('//*/script')
+            regex_pattern = r"(?<=var caasppInfoString = ['|\"])[\w\W]+}}(?=['|\"];)"
             for script in scripts:
                 try:
-                    self.roles = json.loads(re.findall(r"(?<=var caasppInfoString = ')[\w\W]+}}(?=';)", script.text)[0])
-                    break
-                except (TypeError, IndexError):
+                    json_data = re.findall(regex_pattern, script.text)
+                    if json_data:
+                        data = json_data[0].replace("\\t", "").replace("\\", '').replace("'", '"')
+                        self.roles = json.loads(data)
+                        break
+                except (IndexError, TypeError):
                     pass
         else:
             self.visit_history.append(r)
