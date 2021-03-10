@@ -3,8 +3,7 @@
 This module is an attempt to automate many parts of the CAASPP suite of sites in order to gather and submit data efficiently.
 
 TODO:
-    Make this login method useful for more than TOMS.
-    Create method to select role.
+    Create CERS and TIDE controllers and ensure the auth works with those too.
     Define what you want to automate.
 
 """
